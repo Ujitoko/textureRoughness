@@ -10,16 +10,19 @@ import AVFoundation
 class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
 
 	//@IBOutlet weak var imageView: UIImageView!
-    @IBOutlet weak var imageView: UIImageView!
-    
+    @IBOutlet weak var ImageView: UIImageView!
+    //@IBOutlet weak var rightImageView: UIImageView!
     
 	var session: AVCaptureSession!
 	var device: AVCaptureDevice!
 	var output: AVCaptureVideoDataOutput!
-	
+    var count: Int16!
+    var backgroundImg: UIImage!
+    
 	override func viewDidLoad() {
 		super.viewDidLoad()
 
+        count = 0
         let screenWidth = self.view.bounds.width
         let screenHeight = self.view.bounds.height
         print("\(screenWidth), \(screenHeight)")
@@ -115,18 +118,32 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
 			capturedImage = UIImage(cgImage: image, scale: 1.0, orientation: UIImageOrientation.right)
 		}
 		
+        // init
+        /*if (count == 0){
+            backgroundImg = capturedImage
+            count = count + 1
+        }*/
+
+        if (count <= 50){
+            backgroundImg = capturedImage
+            count = count + 1
+        }
+        print(count)
+        
 		// This is a filtering sample.
-        print("capturedImage.size: \(capturedImage.size)")
-		let resultImage = OpenCV.cvtColorBGR2GRAY(capturedImage)
-        print("resultImage.size: \(resultImage.size)")
+        //print("capturedImage.size: \(capturedImage.size)")
+		//let grayImage = OpenCV.cvtColorBGR2GRAY(capturedImage)
+        //let grayImage = OpenCV.cvtSubtractBackground(capturedImage)
+        let resultImage = OpenCV.cvtBinarizeImage(capturedImage, backgroundImg:backgroundImg)
+        //print("resultImage.size: \(resultImage.size)")
         
 		// Show the result.
 		DispatchQueue.main.async(execute: {
 
-			self.imageView.image = resultImage
-            print("imageView.frame.size: \(self.imageView.frame.size)")
+			self.ImageView.image = resultImage
+            //self.rightImageView.image = grayImage
 
-
+            //print("imageView.frame.size: \(self.imageView.frame.size)")
             
 		})
 	}
