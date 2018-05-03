@@ -2,8 +2,6 @@
 //  ViewController.swift
 //  OpenCVSample_iOS
 //
-//  Created by Hiroki Ishiura on 2015/08/12.
-//  Copyright (c) 2015年 Hiroki Ishiura. All rights reserved.
 //
 
 import UIKit
@@ -11,8 +9,10 @@ import AVFoundation
 
 class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
 
-	@IBOutlet weak var imageView: UIImageView!
-	
+	//@IBOutlet weak var imageView: UIImageView!
+    @IBOutlet weak var imageView: UIImageView!
+    
+    
 	var session: AVCaptureSession!
 	var device: AVCaptureDevice!
 	var output: AVCaptureVideoDataOutput!
@@ -20,10 +20,28 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
 	override func viewDidLoad() {
 		super.viewDidLoad()
 
-		// Prepare a video capturing session.
+        let screenWidth = self.view.bounds.width
+        let screenHeight = self.view.bounds.height
+        print("\(screenWidth), \(screenHeight)")
+
+        // Prepare a video capturing session.
 		self.session = AVCaptureSession()
-		self.session.sessionPreset = AVCaptureSession.Preset.vga640x480 // not work in iOS simulator
+        // self.session.sessionPreset = AVCaptureSession.Preset.vga640x480
+        self.session.sessionPreset = AVCaptureSession.Preset.hd1920x1080
+        //self.session.sessionPreset = AVCaptureSession.Preset.hd1280x720
+
+        
         self.device = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: .back)
+        
+        self.device.isFocusModeSupported(.locked)
+        
+        /*
+        if self.device.isFocusPointOfInterestSupported{
+            self.device.focusMode = AVCaptureDevice.FocusMode.autoFocus
+        }
+        */
+
+        //self.device = AVCaptureDevice.default(for: AVMediaType.video)
 		if (self.device == nil) {
 			print("no device")
 			return
@@ -48,7 +66,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
 		}
 		do {
 			try self.device.lockForConfiguration()
-			self.device.activeVideoMinFrameDuration = CMTimeMake(1, 20) // 20 fps
+			self.device.activeVideoMinFrameDuration = CMTimeMake(1, 30) // 20 fps
 			self.device.unlockForConfiguration()
 		} catch {
 			print("could not configure a device")
@@ -98,12 +116,108 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
 		}
 		
 		// This is a filtering sample.
+        print("capturedImage.size: \(capturedImage.size)")
 		let resultImage = OpenCV.cvtColorBGR2GRAY(capturedImage)
-
+        print("resultImage.size: \(resultImage.size)")
+        
 		// Show the result.
 		DispatchQueue.main.async(execute: {
+
 			self.imageView.image = resultImage
+            print("imageView.frame.size: \(self.imageView.frame.size)")
+
+
+            
 		})
 	}
 }
+
+extension UIImage {
+    func resize(size:CGSize) -> UIImage?{
+        // リサイズ処理
+        let origWidth = self.size.width
+        let origHeight = self.size.height
+        
+        var resizeWidth:CGFloat = 0
+        var resizeHeight:CGFloat = 0
+        if (origWidth < origHeight) {
+            resizeWidth = size.width
+            resizeHeight = origHeight * resizeWidth / origWidth
+        } else {
+            resizeHeight = size.height
+            resizeWidth = origWidth * resizeHeight / origHeight
+        }
+        
+        let resizeSize = CGSize(width:resizeWidth, height:resizeHeight)
+        UIGraphicsBeginImageContext(resizeSize)
+        
+        self.draw(in: CGRect(x:0,y: 0,width: resizeWidth, height: resizeHeight))
+        
+        let resizeImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        // 切り抜き処理
+        let cropRect = CGRect(x:( resizeWidth - size.width ) / 2,
+                              y:( resizeHeight - size.height) / 2,
+                              width:size.width,
+                              height:size.height)
+        
+        if let cropRef = resizeImage?.cgImage {
+            cropRef.cropping(to: cropRect)
+            let cropImage = UIImage(cgImage: cropRef)
+            return cropImage
+        }else {
+            print("error!")
+            return nil
+        }
+    }
+    
+    //向きがおかしくなる時用
+    func resizeMaintainDirection(size:CGSize) -> UIImage?{
+        
+        //縦横がおかしくなる時は一度書き直すと良いらしい
+        UIGraphicsBeginImageContextWithOptions(self.size, false, 0.0)
+        self.draw(in:CGRect(x:0,y:0,width:self.size.width,height:self.size.height))
+        guard let image = UIGraphicsGetImageFromCurrentImageContext() else { return nil }
+        UIGraphicsEndImageContext()
+        
+        // リサイズ処理
+        let origWidth = image.size.width
+        let origHeight = image.size.height
+        
+        var resizeWidth:CGFloat = 0
+        var resizeHeight:CGFloat = 0
+        if (origWidth < origHeight) {
+            resizeWidth = size.width
+            resizeHeight = origHeight * resizeWidth / origWidth
+        } else {
+            resizeHeight = size.height
+            resizeWidth = origWidth * resizeHeight / origHeight
+        }
+        
+        let resizeSize = CGSize(width:resizeWidth, height:resizeHeight)
+        UIGraphicsBeginImageContext(resizeSize)
+        
+        image.draw(in: CGRect(x:0,y: 0,width: resizeWidth, height: resizeHeight))
+        
+        let resizeImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        // 切り抜き処理
+        let cropRect = CGRect(x:( resizeWidth - size.width ) / 2,
+                              y:( resizeHeight - size.height) / 2,
+                              width:size.width,
+                              height:size.height)
+        
+        if let cropRef = resizeImage?.cgImage {
+            cropRef.cropping(to: cropRect)
+            let cropImage = UIImage(cgImage: cropRef)
+            return cropImage
+        }else {
+            print("error!")
+            return nil
+        }
+    }
+}
+
 

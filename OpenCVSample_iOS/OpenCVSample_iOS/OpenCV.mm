@@ -2,8 +2,6 @@
 //  OpenCV.m
 //  OpenCVSample_iOS
 //
-//  Created by Hiroki Ishiura on 2015/08/12.
-//  Copyright (c) 2015年 Hiroki Ishiura. All rights reserved.
 //
 
 // Put OpenCV include files at the top. Otherwise an error happens.
@@ -21,6 +19,7 @@ static void UIImageToMat(UIImage *image, cv::Mat &mat) {
 	// Create a pixel buffer.
 	NSInteger width = CGImageGetWidth(image.CGImage);
 	NSInteger height = CGImageGetHeight(image.CGImage);
+    // NSLog("\(width), \(height)")
 	CGImageRef imageRef = image.CGImage;
 	cv::Mat mat8uc4 = cv::Mat((int)height, (int)width, CV_8UC4);
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
