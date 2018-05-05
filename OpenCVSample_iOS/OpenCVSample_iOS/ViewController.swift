@@ -11,17 +11,25 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
 
 	//@IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var ImageView: UIImageView!
-    //@IBOutlet weak var rightImageView: UIImageView!
     
 	var session: AVCaptureSession!
 	var device: AVCaptureDevice!
 	var output: AVCaptureVideoDataOutput!
     var count: Int16!
     var backgroundImg: UIImage!
+    var tmpBackgroundImg: UIImage!
+    var backgroundScale: Float!
     
-	override func viewDidLoad() {
-		super.viewDidLoad()
+    @IBOutlet weak var slider: UISlider!
 
+    @IBAction func sliderValueChanged(_ sender: UISlider) {
+        backgroundScale = sender.value
+    }
+    
+    override func viewDidLoad() {
+		super.viewDidLoad()
+        backgroundScale = 1.0
+        
         count = 0
         let screenWidth = self.view.bounds.width
         let screenHeight = self.view.bounds.height
@@ -37,10 +45,10 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         self.device = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: .back)
         
         self.device.isFocusModeSupported(.locked)
-        
         /*
         if self.device.isFocusPointOfInterestSupported{
-            self.device.focusMode = AVCaptureDevice.FocusMode.autoFocus
+            self.device.isFocusModeSupported(.locked)
+            //self.device.focusMode = AVCaptureDevice.FocusMode.autoFocus
         }
         */
 
@@ -118,34 +126,27 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
 			capturedImage = UIImage(cgImage: image, scale: 1.0, orientation: UIImageOrientation.right)
 		}
 		
-        // init
-        /*if (count == 0){
+        if (count <= 30){
             backgroundImg = capturedImage
             count = count + 1
-        }*/
-
-        if (count <= 50){
-            backgroundImg = capturedImage
-            count = count + 1
+            print(count)
         }
-        print(count)
-        
-		// This is a filtering sample.
-        //print("capturedImage.size: \(capturedImage.size)")
-		//let grayImage = OpenCV.cvtColorBGR2GRAY(capturedImage)
-        //let grayImage = OpenCV.cvtSubtractBackground(capturedImage)
-        let resultImage = OpenCV.cvtBinarizeImage(capturedImage, backgroundImg:backgroundImg)
-        //print("resultImage.size: \(resultImage.size)")
-        
-		// Show the result.
-		DispatchQueue.main.async(execute: {
 
-			self.ImageView.image = resultImage
+        //tmpBackgroundImg = backgroundImg.copy() as! UIImage
+        //let _size:CGSize = (1.0f, 1.0f)
+        //tmpBackgroundImg = backgroundImg.resize(size:CGSize(width:50, height:50))
+        let resultImage = OpenCV.cvtBinarizeImage(capturedImage, backgroundImg:backgroundImg, backgroundScale:backgroundScale)
+        
+        // Show the result.
+        DispatchQueue.main.async(execute: {
+
+            self.ImageView.image = resultImage
             //self.rightImageView.image = grayImage
 
             //print("imageView.frame.size: \(self.imageView.frame.size)")
             
-		})
+        })
+    
 	}
 }
 
